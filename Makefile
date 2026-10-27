@@ -62,6 +62,30 @@ new: clean all
 %.o: %.f90
 	$(FC) $(FFLAGS) $< -c -o $@
 
+# Fortran module dependencies: an object must be built after the objects
+# providing the modules it uses, so that the .mod files exist.
+source/vector_mod.o: source/constants_mod.o
+source/common_mod.o: source/constants_mod.o source/vector_mod.o
+source/set_input_mod.o: source/common_mod.o
+source/hydro_mod.o: source/common_mod.o source/interpolation_mod.o
+source/ph_mod.o: source/common_mod.o source/constants_mod.o source/hydro_mod.o source/interpolation_mod.o
+source/composition_mod.o: source/common_mod.o source/constants_mod.o
+source/continuum_mod.o: source/common_mod.o source/constants_mod.o source/interpolation_mod.o
+source/ionization_mod.o: source/common_mod.o source/constants_mod.o source/ph_mod.o
+source/pathIntegration_mod.o: source/common_mod.o source/interpolation_mod.o source/vector_mod.o
+source/grid_mod.o: source/common_mod.o source/composition_mod.o source/constants_mod.o source/continuum_mod.o source/hydro_mod.o source/interpolation_mod.o source/pathIntegration_mod.o source/ph_mod.o source/set_input_mod.o source/vector_mod.o
+source/dust_mod.o: source/common_mod.o source/continuum_mod.o source/interpolation_mod.o source/ph_mod.o
+source/emission_mod.o: source/common_mod.o source/constants_mod.o source/continuum_mod.o source/grid_mod.o source/hydro_mod.o source/ph_mod.o
+source/photon_mod.o: source/common_mod.o source/constants_mod.o source/continuum_mod.o source/grid_mod.o source/interpolation_mod.o source/pathIntegration_mod.o source/vector_mod.o
+source/update_mod.o: source/common_mod.o source/composition_mod.o source/constants_mod.o source/emission_mod.o source/grid_mod.o source/interpolation_mod.o source/ph_mod.o
+source/output_mod.o: source/common_mod.o source/constants_mod.o source/emission_mod.o source/photon_mod.o
+source/iteration_mod.o: source/common_mod.o source/continuum_mod.o source/emission_mod.o source/ionization_mod.o source/output_mod.o source/photon_mod.o source/update_mod.o
+source/readdata_mod.o: source/common_mod.o
+source/mocassin.o: source/common_mod.o source/constants_mod.o source/dust_mod.o source/grid_mod.o source/iteration_mod.o source/output_mod.o source/ph_mod.o source/readdata_mod.o source/set_input_mod.o
+source/mocassinWarm.o: source/common_mod.o source/constants_mod.o source/dust_mod.o source/grid_mod.o source/iteration_mod.o source/output_mod.o source/ph_mod.o source/set_input_mod.o
+source/mocassinOutput.o: source/common_mod.o source/constants_mod.o source/grid_mod.o source/iteration_mod.o source/output_mod.o source/ph_mod.o source/set_input_mod.o
+source/mocassinPlot.o: source/common_mod.o source/constants_mod.o source/emission_mod.o source/grid_mod.o source/iteration_mod.o source/output_mod.o source/ph_mod.o source/readdata_mod.o source/set_input_mod.o
+
 mocassin: $(SOURCES) source/mocassin.o
 	$(LD) $(LDFLAGS) $(FFLAGS) -o $@ $^
 
